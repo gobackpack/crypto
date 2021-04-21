@@ -1,4 +1,4 @@
-module gobackpack/crypto
+module github.com/gobackpack/crypto
 
 go 1.16
 
