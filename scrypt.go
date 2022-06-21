@@ -15,8 +15,6 @@ import (
 
 // SCrypt hashing algorithm
 type SCrypt struct {
-	Plain   string
-	Hashed  string
 	DK      []byte
 	Salt    []byte
 	N       int // 32768, should be the highest power of 2 derived within 100 milliseconds
@@ -38,37 +36,33 @@ func NewSCrypt() *SCrypt {
 }
 
 // Hash sCrypt.Plain
-func (sCrypt *SCrypt) Hash() error {
-	if sCrypt.Plain == "" {
-		return ErrMissingPlain
-	}
-
+func (sCrypt *SCrypt) Hash(value string) (string, error) {
 	salt, err := GenerateSalt(sCrypt.SaltLen)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	sCrypt.Salt = salt
 
-	dk, err := scrypt.Key([]byte(sCrypt.Plain), sCrypt.Salt, sCrypt.N, sCrypt.R, sCrypt.P, sCrypt.KeyLen)
+	dk, err := scrypt.Key([]byte(value), sCrypt.Salt, sCrypt.N, sCrypt.R, sCrypt.P, sCrypt.KeyLen)
 	if err != nil {
-		return err
+		return "", err
 	}
 	sCrypt.DK = dk
 
-	sCrypt.Hashed = fmt.Sprintf("%d$%d$%d$%x$%x", sCrypt.N, sCrypt.R, sCrypt.P, sCrypt.Salt, sCrypt.DK)
+	hashed := fmt.Sprintf("%d$%d$%d$%x$%x", sCrypt.N, sCrypt.R, sCrypt.P, sCrypt.Salt, sCrypt.DK)
 
-	return nil
+	return hashed, nil
 }
 
 // Validate sCrypt.Plain against sCrypt.Hashed
-func (sCrypt *SCrypt) Validate() bool {
-	existing, err := decodeSCryptHash(sCrypt.Hashed)
+func (sCrypt *SCrypt) Validate(hashed, plain string) bool {
+	existing, err := decodeSCryptHash(hashed)
 	if err != nil {
 		return false
 	}
 
-	dk, err := scrypt.Key([]byte(sCrypt.Plain), existing.Salt, existing.N, existing.R, existing.P, existing.KeyLen)
+	dk, err := scrypt.Key([]byte(plain), existing.Salt, existing.N, existing.R, existing.P, existing.KeyLen)
 	if err != nil {
 		return false
 	}

@@ -6,9 +6,7 @@ import (
 
 // BCrypt hashing algorithm
 type BCrypt struct {
-	Plain  string
-	Hashed string
-	Cost   int
+	Cost int
 }
 
 // NewBCrypt will initialize default bcrypt params
@@ -19,22 +17,16 @@ func NewBCrypt() *BCrypt {
 }
 
 // Hash bCrypt.Plain
-func (bCrypt *BCrypt) Hash() error {
-	if bCrypt.Plain == "" {
-		return ErrMissingPlain
-	}
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(bCrypt.Plain), bCrypt.Cost)
+func (bCrypt *BCrypt) Hash(value string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(value), bCrypt.Cost)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	bCrypt.Hashed = string(hashed)
-
-	return nil
+	return string(hashed), nil
 }
 
 // Validate bCrypt.Plain against bCrypt.Hashed
-func (bCrypt *BCrypt) Validate() bool {
-	return bcrypt.CompareHashAndPassword([]byte(bCrypt.Hashed), []byte(bCrypt.Plain)) == nil
+func (bCrypt *BCrypt) Validate(hashed, plain string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain)) == nil
 }

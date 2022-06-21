@@ -15,8 +15,6 @@ import (
 
 // Argon2 hashing algorithm
 type Argon2 struct {
-	Plain   string
-	Hashed  string
 	DK      []byte
 	Salt    []byte
 	Time    uint32
@@ -37,36 +35,31 @@ func NewArgon2() *Argon2 {
 	}
 }
 
-// Hash argon.Plain
-func (argon *Argon2) Hash() error {
-	if argon.Plain == "" {
-		return ErrMissingPlain
-	}
-
+// Hash value using argon2 algorithm
+func (argon *Argon2) Hash(value string) (string, error) {
 	salt, err := GenerateSalt(argon.SaltLen)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	argon.Salt = salt
 
-	dk := argon2.IDKey([]byte(argon.Plain), argon.Salt, argon.Time, argon.Memory, argon.Threads, argon.KeyLen)
+	dk := argon2.IDKey([]byte(value), argon.Salt, argon.Time, argon.Memory, argon.Threads, argon.KeyLen)
 	argon.DK = dk
 
-	hash := fmt.Sprintf("%d$%d$%d$%d$%x$%x", argon2.Version, argon.Memory, argon.Time, argon.Threads, argon.Salt, argon.DK)
-	argon.Hashed = hash
+	hashed := fmt.Sprintf("%d$%d$%d$%d$%x$%x", argon2.Version, argon.Memory, argon.Time, argon.Threads, argon.Salt, argon.DK)
 
-	return nil
+	return hashed, nil
 }
 
-// Validate argon.Plain against argon.Hashed
-func (argon *Argon2) Validate() bool {
-	existing, err := decodeArgonHash(argon.Hashed)
+// Validate plain against hashed
+func (argon *Argon2) Validate(hashed, plain string) bool {
+	existing, err := decodeArgonHash(hashed)
 	if err != nil {
 		return false
 	}
 
-	dk := argon2.IDKey([]byte(argon.Plain), existing.Salt, existing.Time, existing.Memory, existing.Threads, existing.KeyLen)
+	dk := argon2.IDKey([]byte(plain), existing.Salt, existing.Time, existing.Memory, existing.Threads, existing.KeyLen)
 
 	if subtle.ConstantTimeCompare(existing.DK, dk) == 1 {
 		return true

@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// GCM crypter
+// GCM encryption
 type GCM struct {
 	Secret string
 }

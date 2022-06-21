@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// CBC crypter
+// CBC encryption
 type CBC struct {
 	Secret string
 	IV     string
