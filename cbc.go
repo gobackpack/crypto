@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"strings"
 )
 
 // CBC encryption
@@ -16,12 +15,15 @@ type CBC struct {
 	IV     string
 }
 
+func NewCBC(secret, iv string) *CBC {
+	return &CBC{
+		Secret: secret,
+		IV:     iv,
+	}
+}
+
 // Encrypt payload using AES encryption CBC mode
 func (cbcEnc *CBC) Encrypt(payload []byte) (string, string, string, error) {
-	if strings.TrimSpace(cbcEnc.Secret) == "" {
-		return "", "", "", errors.New("secret key not provided")
-	}
-
 	key := []byte(cbcEnc.Secret)
 
 	block, err := aes.NewCipher(key)
@@ -43,10 +45,6 @@ func (cbcEnc *CBC) Encrypt(payload []byte) (string, string, string, error) {
 
 // Decrypt AES CBC encrypted input
 func (cbcEnc *CBC) Decrypt(encrypted string) (string, error) {
-	if strings.TrimSpace(cbcEnc.Secret) == "" {
-		return "", errors.New("secret key not provided")
-	}
-
 	key := []byte(cbcEnc.Secret)
 
 	block, err := aes.NewCipher(key)

@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"strings"
 )
 
 // GCM encryption
@@ -16,12 +15,14 @@ type GCM struct {
 	Secret string
 }
 
+func NewGCM(secret string) *GCM {
+	return &GCM{
+		Secret: secret,
+	}
+}
+
 // Encrypt payload using AES GCM encryption mode
 func (gcmEnc *GCM) Encrypt(payload []byte) (string, string, string, error) {
-	if strings.TrimSpace(gcmEnc.Secret) == "" {
-		return "", "", "", errors.New("secret key not provided")
-	}
-
 	key := []byte(gcmEnc.Secret)
 
 	block, err := aes.NewCipher(key)
@@ -46,10 +47,6 @@ func (gcmEnc *GCM) Encrypt(payload []byte) (string, string, string, error) {
 
 // Decrypt AES GCM encrypted input
 func (gcmEnc *GCM) Decrypt(payload string) (string, error) {
-	if strings.TrimSpace(gcmEnc.Secret) == "" {
-		return "", errors.New("secret key not provided")
-	}
-
 	key := []byte(gcmEnc.Secret)
 
 	block, err := aes.NewCipher(key)
