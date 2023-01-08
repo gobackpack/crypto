@@ -10,9 +10,5 @@ func GenerateSalt(length int) ([]byte, error) {
 	salt := make([]byte, length)
 
 	_, err := io.ReadFull(rand.Reader, salt)
-	if err != nil {
-		return nil, err
-	}
-
-	return salt, nil
+	return salt, err
 }

@@ -76,38 +76,38 @@ func (sCrypt *SCrypt) Validate(hashed, plain string) bool {
 
 // decodeSCryptHash
 func decodeSCryptHash(hash string) (*SCrypt, error) {
-	vals := strings.Split(hash, "$")
+	values := strings.Split(hash, "$")
 
-	// P, N, R, salt, scrypt derived key
-	if len(vals) != 5 {
+	// P, N, R, Salt, scrypt derived key
+	if len(values) != 5 {
 		return nil, errors.New("invalid hash")
 	}
 
 	sCrypt := &SCrypt{}
 	var err error
 
-	sCrypt.N, err = strconv.Atoi(vals[0])
+	sCrypt.N, err = strconv.Atoi(values[0])
 	if err != nil {
 		return nil, errors.New("invalid hash")
 	}
 
-	sCrypt.R, err = strconv.Atoi(vals[1])
+	sCrypt.R, err = strconv.Atoi(values[1])
 	if err != nil {
 		return nil, errors.New("invalid hash")
 	}
 
-	sCrypt.P, err = strconv.Atoi(vals[2])
+	sCrypt.P, err = strconv.Atoi(values[2])
 	if err != nil {
 		return nil, errors.New("invalid hash")
 	}
 
-	sCrypt.Salt, err = hex.DecodeString(vals[3])
+	sCrypt.Salt, err = hex.DecodeString(values[3])
 	if err != nil {
 		return nil, errors.New("invalid hash")
 	}
 	sCrypt.SaltLen = len(sCrypt.Salt)
 
-	sCrypt.DK, err = hex.DecodeString(vals[4])
+	sCrypt.DK, err = hex.DecodeString(values[4])
 	if err != nil {
 		return nil, errors.New("invalid hash")
 	}

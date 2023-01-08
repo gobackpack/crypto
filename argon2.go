@@ -22,6 +22,7 @@ type Argon2 struct {
 	Threads uint8
 	SaltLen int
 	KeyLen  uint32
+	SaltGen func(len int) ([]byte, error)
 }
 
 // NewArgon2 will initialize default Argon2 params
@@ -32,12 +33,13 @@ func NewArgon2() *Argon2 {
 		Threads: 2,
 		SaltLen: 32,
 		KeyLen:  32,
+		SaltGen: GenerateSalt,
 	}
 }
 
 // Hash value using argon2 algorithm
 func (argon *Argon2) Hash(value string) (string, error) {
-	salt, err := GenerateSalt(argon.SaltLen)
+	salt, err := argon.SaltGen(argon.SaltLen)
 	if err != nil {
 		return "", err
 	}
@@ -53,31 +55,31 @@ func (argon *Argon2) Hash(value string) (string, error) {
 }
 
 // Validate plain against hashed
-func (argon *Argon2) Validate(hashed, plain string) bool {
+func (argon *Argon2) Validate(hashed, plain string) error {
 	existing, err := decodeArgonHash(hashed)
 	if err != nil {
-		return false
+		return err
 	}
 
 	dk := argon2.IDKey([]byte(plain), existing.Salt, existing.Time, existing.Memory, existing.Threads, existing.KeyLen)
 
 	if subtle.ConstantTimeCompare(existing.DK, dk) == 1 {
-		return true
+		return nil
 	}
 
-	return false
+	return errors.New("hash validation failed")
 }
 
 // decodeArgonHash
 func decodeArgonHash(encodedHash string) (*Argon2, error) {
-	vals := strings.Split(encodedHash, "$")
-	if len(vals) != 6 {
-		return nil, errors.New("invalid hash")
+	values := strings.Split(encodedHash, "$")
+	if len(values) != 6 {
+		return nil, errors.New("invalid hash length")
 	}
 
 	argon := &Argon2{}
 
-	version, err := strconv.Atoi(vals[0])
+	version, err := strconv.Atoi(values[0])
 	if err != nil {
 		return nil, err
 	}
@@ -85,31 +87,31 @@ func decodeArgonHash(encodedHash string) (*Argon2, error) {
 		return nil, errors.New("incompatible argon2 version")
 	}
 
-	memory, err := strconv.Atoi(vals[1])
+	memory, err := strconv.Atoi(values[1])
 	if err != nil {
 		return nil, err
 	}
 	argon.Memory = uint32(memory)
 
-	time, err := strconv.Atoi(vals[2])
+	time, err := strconv.Atoi(values[2])
 	if err != nil {
 		return nil, err
 	}
 	argon.Time = uint32(time)
 
-	threads, err := strconv.Atoi(vals[3])
+	threads, err := strconv.Atoi(values[3])
 	if err != nil {
 		return nil, err
 	}
 	argon.Threads = uint8(threads)
 
-	argon.Salt, err = hex.DecodeString(vals[4])
+	argon.Salt, err = hex.DecodeString(values[4])
 	if err != nil {
 		return nil, err
 	}
 	argon.SaltLen = len(argon.Salt)
 
-	argon.DK, err = hex.DecodeString(vals[5])
+	argon.DK, err = hex.DecodeString(values[5])
 	if err != nil {
 		return nil, err
 	}
