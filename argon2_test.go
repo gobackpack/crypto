@@ -41,8 +41,7 @@ func TestArgon2_Hash_SaltGenFail(t *testing.T) {
 	argon2.SaltGen = mockedSaltGenErr
 
 	_, err := argon2.Hash("test-123")
-	assert.Error(t, err)
-	assert.Equal(t, errors.New("salt gen failed"), err)
+	assert.Equal(t, "salt gen failed", err.Error())
 }
 
 func TestArgon2_Validate(t *testing.T) {
