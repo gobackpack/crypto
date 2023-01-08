@@ -27,6 +27,6 @@ func (bCrypt *BCrypt) Hash(value string) (string, error) {
 }
 
 // Validate bCrypt.Plain against bCrypt.Hashed
-func (bCrypt *BCrypt) Validate(hashed, plain string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain)) == nil
+func (bCrypt *BCrypt) Validate(hashed, plain string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
 }
