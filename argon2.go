@@ -67,7 +67,7 @@ func (argon *Argon2) Validate(hashed, plain string) error {
 		return nil
 	}
 
-	return errors.New("hash validation failed")
+	return errors.New("invalid hash")
 }
 
 // decodeArgonHash

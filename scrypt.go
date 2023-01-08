@@ -20,8 +20,9 @@ type SCrypt struct {
 	N       int // 32768, should be the highest power of 2 derived within 100 milliseconds
 	R       int // 8
 	P       int // 1
-	KeyLen  int // 32
 	SaltLen int // 32
+	KeyLen  int // 32
+	SaltGen func(len int) ([]byte, error)
 }
 
 // NewSCrypt will initialize default SCrypt params
@@ -30,14 +31,15 @@ func NewSCrypt() *SCrypt {
 		N:       32768,
 		R:       8,
 		P:       1,
-		KeyLen:  32,
 		SaltLen: 32,
+		KeyLen:  32,
+		SaltGen: GenerateSalt,
 	}
 }
 
 // Hash sCrypt.Plain
 func (sCrypt *SCrypt) Hash(value string) (string, error) {
-	salt, err := GenerateSalt(sCrypt.SaltLen)
+	salt, err := sCrypt.SaltGen(sCrypt.SaltLen)
 	if err != nil {
 		return "", err
 	}
@@ -56,22 +58,22 @@ func (sCrypt *SCrypt) Hash(value string) (string, error) {
 }
 
 // Validate sCrypt.Plain against sCrypt.Hashed
-func (sCrypt *SCrypt) Validate(hashed, plain string) bool {
+func (sCrypt *SCrypt) Validate(hashed, plain string) error {
 	existing, err := decodeSCryptHash(hashed)
 	if err != nil {
-		return false
+		return err
 	}
 
 	dk, err := scrypt.Key([]byte(plain), existing.Salt, existing.N, existing.R, existing.P, existing.KeyLen)
 	if err != nil {
-		return false
+		return err
 	}
 
 	if subtle.ConstantTimeCompare(existing.DK, dk) == 1 {
-		return true
+		return nil
 	}
 
-	return false
+	return errors.New("invalid hash")
 }
 
 // decodeSCryptHash
@@ -80,7 +82,7 @@ func decodeSCryptHash(hash string) (*SCrypt, error) {
 
 	// P, N, R, Salt, scrypt derived key
 	if len(values) != 5 {
-		return nil, errors.New("invalid hash")
+		return nil, errors.New("invalid hash length")
 	}
 
 	sCrypt := &SCrypt{}
@@ -88,28 +90,28 @@ func decodeSCryptHash(hash string) (*SCrypt, error) {
 
 	sCrypt.N, err = strconv.Atoi(values[0])
 	if err != nil {
-		return nil, errors.New("invalid hash")
+		return nil, err
 	}
 
 	sCrypt.R, err = strconv.Atoi(values[1])
 	if err != nil {
-		return nil, errors.New("invalid hash")
+		return nil, err
 	}
 
 	sCrypt.P, err = strconv.Atoi(values[2])
 	if err != nil {
-		return nil, errors.New("invalid hash")
+		return nil, err
 	}
 
 	sCrypt.Salt, err = hex.DecodeString(values[3])
 	if err != nil {
-		return nil, errors.New("invalid hash")
+		return nil, err
 	}
 	sCrypt.SaltLen = len(sCrypt.Salt)
 
 	sCrypt.DK, err = hex.DecodeString(values[4])
 	if err != nil {
-		return nil, errors.New("invalid hash")
+		return nil, err
 	}
 	sCrypt.KeyLen = len(sCrypt.DK)
 
