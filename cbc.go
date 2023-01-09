@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"encoding/base64"
 	"encoding/hex"
 	"errors"
 )
@@ -22,25 +21,23 @@ func NewCBC(secret, iv string) *CBC {
 	}
 }
 
-// Encrypt payload using AES encryption CBC mode
-func (cbcEnc *CBC) Encrypt(payload []byte) (string, string, string, error) {
+// Encrypt content using AES encryption CBC mode
+func (cbcEnc *CBC) Encrypt(content []byte) (string, string, error) {
 	key := []byte(cbcEnc.Secret)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", "", "", err
+		return "", "", err
 	}
 
-	byteIn := pkcsPad(payload, aes.BlockSize)
-
+	byteIn := pkcsPad(content, aes.BlockSize)
 	encrypted := make([]byte, len(byteIn))
-
 	byteIV := []byte(cbcEnc.IV)
 
 	mode := cipher.NewCBCEncrypter(block, byteIV)
 	mode.CryptBlocks(encrypted, byteIn)
 
-	return string(encrypted), hex.EncodeToString(encrypted), base64.URLEncoding.EncodeToString(encrypted), nil
+	return string(encrypted), hex.EncodeToString(encrypted), nil
 }
 
 // Decrypt AES CBC encrypted input
@@ -58,7 +55,6 @@ func (cbcEnc *CBC) Decrypt(encrypted string) (string, error) {
 	}
 
 	decrypted := make([]byte, len(byteIn))
-
 	byteIV := []byte(cbcEnc.IV)
 
 	mode := cipher.NewCBCDecrypter(block, byteIV)
@@ -72,7 +68,7 @@ func (cbcEnc *CBC) Decrypt(encrypted string) (string, error) {
 	return string(decrypted), nil
 }
 
-// pkcsPad for non-full length blocks
+// pkcsPad for non-full length blocks.
 // pkcs5 or pkcs7 will be used based on block size
 func pkcsPad(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
@@ -81,7 +77,7 @@ func pkcsPad(ciphertext []byte, blockSize int) []byte {
 	return append(ciphertext, padtext...)
 }
 
-// pkcsUnPad will remove PKCS5 padding
+// pkcsUnPad will remove PKCS5 padding.
 // pkcs5 or pkcs7 will be used based on block size
 func pkcsUnPad(input []byte, blockSize int) ([]byte, error) {
 	inputLen := len(input)
